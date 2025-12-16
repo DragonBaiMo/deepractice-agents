@@ -1,0 +1,16 @@
+{
+  "name": "deepractice-agents",
+  "version": "0.1.0",
+  "description": "智能体开发教程 - 基于 TypeScript + AgentX + PromptX",
+  "private": true,
+  "keywords": [
+    "ai",
+    "agent",
+    "llm",
+    "typescript",
+    "agentx",
+    "promptx"
+  ],
+  "author": "Deepractice",
+  "license": "MIT"
+}
