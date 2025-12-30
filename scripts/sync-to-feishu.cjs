@@ -106,56 +106,251 @@ function readMarkdownFiles(dir, baseDir = dir) {
 }
 
 /**
- * 将 Markdown 转换为飞书文档格式（简化版）
+ * 解析行内 Markdown 格式（加粗、斜体、代码、链接）
+ */
+function parseInlineMarkdown(text) {
+  const elements = [];
+  let remaining = text;
+
+  while (remaining.length > 0) {
+    // 匹配链接 [text](url)
+    const linkMatch = remaining.match(/^\[([^\]]+)\]\(([^)]+)\)/);
+    if (linkMatch) {
+      elements.push({
+        text_run: {
+          content: linkMatch[1],
+          text_element_style: {
+            link: { url: linkMatch[2] },
+          },
+        },
+      });
+      remaining = remaining.slice(linkMatch[0].length);
+      continue;
+    }
+
+    // 匹配行内代码 `code`
+    const codeMatch = remaining.match(/^`([^`]+)`/);
+    if (codeMatch) {
+      elements.push({
+        text_run: {
+          content: codeMatch[1],
+          text_element_style: {
+            inline_code: true,
+          },
+        },
+      });
+      remaining = remaining.slice(codeMatch[0].length);
+      continue;
+    }
+
+    // 匹配加粗 **text** 或 __text__
+    const boldMatch = remaining.match(/^(\*\*|__)([^*_]+)\1/);
+    if (boldMatch) {
+      elements.push({
+        text_run: {
+          content: boldMatch[2],
+          text_element_style: {
+            bold: true,
+          },
+        },
+      });
+      remaining = remaining.slice(boldMatch[0].length);
+      continue;
+    }
+
+    // 匹配斜体 *text* 或 _text_
+    const italicMatch = remaining.match(/^(\*|_)([^*_]+)\1/);
+    if (italicMatch) {
+      elements.push({
+        text_run: {
+          content: italicMatch[2],
+          text_element_style: {
+            italic: true,
+          },
+        },
+      });
+      remaining = remaining.slice(italicMatch[0].length);
+      continue;
+    }
+
+    // 普通文本（找到下一个特殊字符或结束）
+    const nextSpecial = remaining.search(/[\[`*_]/);
+    if (nextSpecial === -1) {
+      elements.push({ text_run: { content: remaining } });
+      break;
+    } else if (nextSpecial === 0) {
+      // 特殊字符但不匹配模式，作为普通文本
+      elements.push({ text_run: { content: remaining[0] } });
+      remaining = remaining.slice(1);
+    } else {
+      elements.push({ text_run: { content: remaining.slice(0, nextSpecial) } });
+      remaining = remaining.slice(nextSpecial);
+    }
+  }
+
+  return elements.length > 0 ? elements : [{ text_run: { content: text } }];
+}
+
+/**
+ * 将 Markdown 转换为飞书文档格式
  */
 function markdownToFeishuBlocks(markdown) {
   const blocks = [];
   const lines = markdown.split('\n');
 
-  for (const line of lines) {
+  let inCodeBlock = false;
+  let codeBlockLang = '';
+  let codeBlockContent = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    // 代码块处理
+    if (line.startsWith('```')) {
+      if (!inCodeBlock) {
+        inCodeBlock = true;
+        codeBlockLang = line.slice(3).trim() || 'plaintext';
+        codeBlockContent = [];
+      } else {
+        // 代码块结束
+        blocks.push({
+          block_type: 14, // code block
+          code: {
+            language: mapLanguage(codeBlockLang),
+            elements: [{ text_run: { content: codeBlockContent.join('\n') } }],
+          },
+        });
+        inCodeBlock = false;
+        codeBlockLang = '';
+        codeBlockContent = [];
+      }
+      continue;
+    }
+
+    if (inCodeBlock) {
+      codeBlockContent.push(line);
+      continue;
+    }
+
     // 标题
-    if (line.startsWith('# ')) {
+    if (line.startsWith('#### ')) {
       blocks.push({
-        block_type: 2, // heading1
-        heading1: {
-          elements: [{ text_run: { content: line.slice(2) } }],
-        },
-      });
-    } else if (line.startsWith('## ')) {
-      blocks.push({
-        block_type: 3, // heading2
-        heading2: {
-          elements: [{ text_run: { content: line.slice(3) } }],
+        block_type: 5, // heading4
+        heading4: {
+          elements: parseInlineMarkdown(line.slice(5)),
         },
       });
     } else if (line.startsWith('### ')) {
       blocks.push({
         block_type: 4, // heading3
         heading3: {
-          elements: [{ text_run: { content: line.slice(4) } }],
+          elements: parseInlineMarkdown(line.slice(4)),
         },
       });
-    } else if (line.startsWith('- ') || line.startsWith('* ')) {
+    } else if (line.startsWith('## ')) {
       blocks.push({
-        block_type: 14, // bullet
+        block_type: 3, // heading2
+        heading2: {
+          elements: parseInlineMarkdown(line.slice(3)),
+        },
+      });
+    } else if (line.startsWith('# ')) {
+      blocks.push({
+        block_type: 2, // heading1
+        heading1: {
+          elements: parseInlineMarkdown(line.slice(2)),
+        },
+      });
+    }
+    // 有序列表
+    else if (/^\d+\.\s/.test(line)) {
+      const content = line.replace(/^\d+\.\s/, '');
+      blocks.push({
+        block_type: 13, // ordered list
+        ordered: {
+          elements: parseInlineMarkdown(content),
+        },
+      });
+    }
+    // 无序列表
+    else if (line.startsWith('- ') || line.startsWith('* ')) {
+      blocks.push({
+        block_type: 12, // bullet list
         bullet: {
-          elements: [{ text_run: { content: line.slice(2) } }],
+          elements: parseInlineMarkdown(line.slice(2)),
         },
       });
-    } else if (line.startsWith('```')) {
-      // 代码块开始/结束，简化处理
-      continue;
-    } else if (line.trim()) {
+    }
+    // 引用
+    else if (line.startsWith('> ')) {
       blocks.push({
-        block_type: 2, // text
+        block_type: 17, // quote
+        quote: {
+          elements: parseInlineMarkdown(line.slice(2)),
+        },
+      });
+    }
+    // 分割线
+    else if (/^(-{3,}|\*{3,}|_{3,})$/.test(line.trim())) {
+      blocks.push({
+        block_type: 22, // divider
+        divider: {},
+      });
+    }
+    // 普通段落
+    else if (line.trim()) {
+      blocks.push({
+        block_type: 2, // text/paragraph
         text: {
-          elements: [{ text_run: { content: line } }],
+          elements: parseInlineMarkdown(line),
         },
       });
     }
   }
 
   return blocks;
+}
+
+/**
+ * 映射编程语言到飞书支持的语言
+ */
+function mapLanguage(lang) {
+  const langMap = {
+    'js': 1, // JavaScript
+    'javascript': 1,
+    'ts': 2, // TypeScript
+    'typescript': 2,
+    'python': 3,
+    'py': 3,
+    'java': 4,
+    'go': 5,
+    'golang': 5,
+    'c': 6,
+    'cpp': 7,
+    'c++': 7,
+    'csharp': 8,
+    'c#': 8,
+    'php': 9,
+    'ruby': 10,
+    'rust': 11,
+    'swift': 12,
+    'kotlin': 13,
+    'sql': 14,
+    'shell': 15,
+    'bash': 15,
+    'sh': 15,
+    'json': 16,
+    'xml': 17,
+    'html': 18,
+    'css': 19,
+    'yaml': 20,
+    'yml': 20,
+    'markdown': 21,
+    'md': 21,
+    'plaintext': 0,
+    'text': 0,
+  };
+  return langMap[lang.toLowerCase()] || 0;
 }
 
 /**
