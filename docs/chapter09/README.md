@@ -2,7 +2,7 @@
 
 > 从记忆到认知 —— 构建有思考能力的智能体
 
-在第五章中，我们初步了解了 PromptX 的 Engram 记忆网络和 Monogent 认知架构的基本概念。本章将深入实践 Monogent，将理论转化为可运行的代码。
+在第四章中，我们初步了解了 PromptX 的 Engram 记忆网络和 Monogent 认知架构的基本概念。本章将深入实践 Monogent，将理论转化为可运行的代码。
 
 **Monogent** 是 Deepractice 团队开发的认知架构系统，它定义了体验如何被处理、如何演化、以及如何形成连贯的认知链。如果说 Engram 是记忆的"存储格式"，那么 Monogent 就是认知的"操作系统"。
 

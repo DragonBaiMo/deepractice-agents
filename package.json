@@ -3,6 +3,12 @@
   "version": "0.1.0",
   "description": "智能体开发教程 - 基于 TypeScript + AgentX + PromptX",
   "private": true,
+  "type": "module",
+  "scripts": {
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
+  },
   "keywords": [
     "ai",
     "agent",
@@ -12,5 +18,11 @@
     "promptx"
   ],
   "author": "Deepractice",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "vitepress": "^1.5.0"
+  },
+  "dependencies": {
+    "markdown-it-mathjax3": "^4.3.2"
+  }
 }
