@@ -83,7 +83,7 @@ export default defineConfig({
         items: [
           { text: '章节概述', link: '/chapter05/' },
           { text: '5.1 五分钟体验PromptX', link: '/chapter05/5.1-五分钟体验PromptX' },
-          { text: '5.2 语义鸿沟', link: '/chapter05/5.2-语义鸿沟' },
+          { text: '5.2 快速开始', link: '/chapter05/5.2-快速开始' },
           { text: '5.3 Nuwa角色创建', link: '/chapter05/5.3-Nuwa角色创建' },
           { text: '5.4 Luban工具创建', link: '/chapter05/5.4-Luban工具创建' },
           { text: '5.5 Engram记忆网络', link: '/chapter05/5.5-Engram记忆网络' },

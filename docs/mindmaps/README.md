@@ -30,7 +30,7 @@ mindmaps/
 │
 ├── chapter04/          # 第4章：PromptX 平台
 │   ├── 01-overview.puml           # 知识全景图
-│   ├── 02-semantic-gap.puml       # 语义鸿沟识别活动图
+│   ├── 02-semantic-gap.puml       # 上下文鸿沟识别活动图
 │   ├── 03-nuwa-role.puml          # Nuwa 角色创建时序图
 │   ├── 04-engram-network.puml     # Engram 语义网络
 │   └── 05-cognitive-cycle.puml    # 认知循环状态图

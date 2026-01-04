@@ -1,5 +1,5 @@
 @startuml
-title 语义鸿沟识别与填补
+title 上下文鸿沟识别与填补
 
 skinparam backgroundColor #FEFEFE
 skinparam activity {
@@ -38,9 +38,9 @@ endif
 if (是通用还是私有?) then (通用)
   :公共知识\n非鸿沟;
 else (私有)
-  #E74C3C:确认为语义鸿沟!;
+  #E74C3C:确认为上下文鸿沟!;
   note right
-    **语义鸿沟示例**
+    **上下文鸿沟示例**
     - 公司组件规范
     - 团队代码风格
     - 项目 API 约定
@@ -72,7 +72,7 @@ split again
   end note
 end split
 
-:语义鸿沟被填补;
+:上下文鸿沟被填补;
 :AI 获得完整认知;
 
 stop
